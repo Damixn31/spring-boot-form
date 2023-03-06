@@ -1,13 +1,14 @@
 package com.bolsadeideas.springboot.form.app.models.domain;
 
 import java.util.Date;
+import java.util.List;
 
 //import org.springframework.format.annotation.DateTimeFormat;
 
 import com.bolsadeideas.springboot.form.app.validation.IdentificadorRegex;
 import com.bolsadeideas.springboot.form.app.validation.Requerido;
 
-import jakarta.validation.Valid;
+//import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 //import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Max;
@@ -59,8 +60,18 @@ public class Usuario {
 	//@DateTimeFormat(pattern = "yyyy-MM-dd") // para darle el tipo de formato  y que no se cambie
 	private Date fechaNacimiento;
 	
-	@Valid
+	@NotNull
 	private Pais pais;
+	
+	@NotEmpty
+	private List<Role> roles;
+	
+	private Boolean habilitar;
+	
+	@NotEmpty
+	private String genero;
+	
+	private String valorSecreto;
 
 	public String getUsername() {
 		return username;
@@ -132,6 +143,38 @@ public class Usuario {
 	
 	public void setPais(Pais pais) {
 		this.pais = pais;
+	}
+	
+	public List<Role> getRoles() {
+		return roles;
+	}
+	
+	public void setRoles(List<Role> roles) {
+		this.roles = roles;
+	}
+	
+	public Boolean getHabilitar() {
+		return habilitar;
+	}
+	
+	public void setHabilitar(Boolean habilitar) {
+		this.habilitar = habilitar;
+	}
+	
+	public String getGenero() {
+		return genero;
+	}
+	
+	public void setGenero(String genero) {
+		this.genero = genero;
+	}
+	
+	public String getValorSecreto() {
+		return valorSecreto;
+	}
+	
+	public void setValorSecreto(String valorSecreto) {
+		this.valorSecreto = valorSecreto;
 	}
 
 }

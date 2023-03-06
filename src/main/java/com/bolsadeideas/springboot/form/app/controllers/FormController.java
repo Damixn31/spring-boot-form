@@ -1,6 +1,7 @@
 package com.bolsadeideas.springboot.form.app.controllers;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -17,12 +18,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.support.SessionStatus;
 
 import com.bolsadeideas.springboot.form.app.editors.NombreMayusculaEditor;
+import com.bolsadeideas.springboot.form.app.editors.PaisPropertyEditor;
+import com.bolsadeideas.springboot.form.app.editors.RolesEditor;
 import com.bolsadeideas.springboot.form.app.models.domain.Pais;
+import com.bolsadeideas.springboot.form.app.models.domain.Role;
 import com.bolsadeideas.springboot.form.app.models.domain.Usuario;
+import com.bolsadeideas.springboot.form.app.services.PaisService;
+import com.bolsadeideas.springboot.form.app.services.RoleService;
 import com.bolsadeideas.springboot.form.app.validation.UsuarioValidador;
 
 import jakarta.validation.Valid;
@@ -33,6 +40,18 @@ public class FormController {
 	
 	@Autowired
 	private UsuarioValidador validador;
+	
+	@Autowired
+	private PaisService paisService;
+	
+	@Autowired
+	private RoleService roleService;
+	
+	@Autowired
+	private PaisPropertyEditor paisEditor; 
+	
+	@Autowired
+	private RolesEditor roleEditor;
 	
 	// hace la validacion de manera transparente
 	@InitBinder
@@ -47,18 +66,43 @@ public class FormController {
 		// para covertir a mayusculas y sin espacios
 		binder.registerCustomEditor(String.class, "nombre", new NombreMayusculaEditor());
 		binder.registerCustomEditor(String.class, "apellido", new NombreMayusculaEditor());
+		
+		binder.registerCustomEditor(Pais.class, "pais", paisEditor);
+		binder.registerCustomEditor(Role.class, "roles", roleEditor);
+	}
+	
+	@ModelAttribute("genero")
+	public List<String> genero() {
+		return Arrays.asList("Hombre", "Mujer");
+	}
+	
+	@ModelAttribute("listaRoles")
+	public List<Role> listaRoles() {
+		return this.roleService.listar();
 	}
 	
 	@ModelAttribute("listaPaises")
 	public List<Pais> listaPaises(){
-		return Arrays.asList(
-				new Pais(1, "ES", "Espania"),
-				new Pais(2, "MX", "Mexico"),
-				new Pais(3, "CL", "Chile"),
-				new Pais(4, "AR", "Argentina"),
-				new Pais(5, "PE", "Peru"),
-				new Pais(6, "CO", "Colombia"),
-				new Pais(7, "VE", "Venezuela"));
+		return paisService.listar();
+	}
+	
+	@ModelAttribute("listaRolesString")
+	public List<String> listaRolesString(){
+		List<String> roles = new ArrayList<>();
+		roles.add("ROLE_ADMIN");
+		roles.add("ROLE_USER");
+		roles.add("ROLE_MODERATOR");
+		return roles;
+	}
+	
+	@ModelAttribute("listaRolesMap")
+	public Map<String, String> listaRolesMap(){
+		Map<String, String> roles = new HashMap<String, String>();
+		roles.put("ROLE_ADMIN", "Administrador");
+		roles.put("ROLE_USER", "Usuario");
+		roles.put("ROLE_MODERATOR", "Moderador");
+		
+		return roles;
 	}
 	
 	@ModelAttribute("paises")
@@ -91,22 +135,31 @@ public class FormController {
 		
 		usuario.setIdentificador("12.467.757-K");
 		
+		usuario.setHabilitar(true);
+		
+		usuario.setValorSecreto("Algun valor secreto ****");
+		
+		// para mantener un valor por defecto en el formulario pais
+		usuario.setPais(new Pais(3, "CL", "Chile"));
+		
+		// para mantener un calor por defecto en el formularios roles
+		usuario.setRoles(Arrays.asList(new Role(2, "Usuario", "ROLE_USER")));
+		
+		
 		model.addAttribute("titulo", "Formulario usuarios");
 		model.addAttribute("usuario", usuario); // para que no pase el nullPointerException
 		return "form";
 	}
 	
 	@PostMapping("/form")
-	public String procesar(@Valid Usuario usuario, BindingResult result, Model model, SessionStatus status) { //@ResquestParam para capturar los parametros que nos llegan en el formulario como name
+	public String procesar(@Valid Usuario usuario, BindingResult result, Model model) { //@ResquestParam para capturar los parametros que nos llegan en el formulario como name
 		
 		// validamos de forma explicita
 		//validador.validate(usuario, result);
-		
-		//paramos el valor a la vista
-				model.addAttribute("titulo", "Resultado form");
 				
 	    // validaciones si es valido o no
 		if(result.hasErrors()) {
+			model.addAttribute("titulo", "Resultado form");
 			//Map<String, String> errores = new HashMap<>();
 			//result.getFieldErrors().forEach(err -> {
 			//	errores.put(err.getField(), "El campo ".concat(err.getField()).concat(" ").concat(err.getDefaultMessage()));
@@ -114,11 +167,20 @@ public class FormController {
 			//model.addAttribute("error", errores);
 			return "form";
 		}
-		
-		model.addAttribute("usuario", usuario); // pasamos el objeto del modelo usuario con los datos de nuestra aplic
 	
-		status.setComplete(); // de manera automatico se elimina objeto usuario de la session
+		return "redirect:/ver";
+	}
+	
+	
+	// para que no se vuelva a mandar el formulario cuando hacen un refresh en la pagina
+	@GetMapping("/ver")
+	public String ver(@SessionAttribute(name ="usuario", required= false) Usuario usuario, Model model, SessionStatus status) {
+		if(usuario == null) {
+			return "redirect:/form";
+		}
+		model.addAttribute("titulo", "Resultado form");
 		
+		status.setComplete(); // de manera automatico se elimina objeto usuario de la session
 		return "resultado";
 	}
 

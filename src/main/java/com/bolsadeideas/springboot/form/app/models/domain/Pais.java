@@ -1,10 +1,10 @@
 package com.bolsadeideas.springboot.form.app.models.domain;
 
-import jakarta.validation.constraints.NotNull;
+
 
 public class Pais {
 
-	@NotNull
+	
 	private Integer id;
 	private String codigo;
 	private String nombre;
@@ -41,5 +41,11 @@ public class Pais {
 
 	public void setNombre(String nombre) {
 		this.nombre = nombre;
+	}
+	
+	// para que en formulario deje seleccionado el pais que le pasamos en el controlador FormController
+	@Override
+	public String toString() {
+		return this.id.toString();
 	}
 }
